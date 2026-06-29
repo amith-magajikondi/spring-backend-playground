@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.playground</groupId>
-	<artifactId>01-basic-websocket</artifactId>
+	<artifactId>basic_websocket</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>
