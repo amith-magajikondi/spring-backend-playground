@@ -1,0 +1,23 @@
+package com.playground.basic_websocket.config;
+
+import com.playground.basic_websocket.handler.EchoWebSocketHandler;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
+@Configuration
+@EnableWebSocket
+public class WebSocketConfig implements WebSocketConfigurer {
+    private final EchoWebSocketHandler handler;
+    public WebSocketConfig(EchoWebSocketHandler handler) {
+        this.handler = handler;
+    }
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(
+                new EchoWebSocketHandler(),
+                "/echo"
+        ).setAllowedOrigins("*");
+    }
+}
