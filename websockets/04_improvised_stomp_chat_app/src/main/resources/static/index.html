@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Improvised STOMP Chat App</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        #container {
+            flex: 3;
+        }
+
+        #sidebar {
+            flex: 1;
+            border-left: 1px solid #ccc;
+            padding-left: 10px;
+        }
+
+        #messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #events {
+            color: gray;
+            font-size: 13px;
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        #typing {
+            font-style: italic;
+            color: green;
+            height: 20px;
+        }
+
+        input {
+            width: 70%;
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+        }
+
+        ul {
+            padding-left: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="container">
+
+    <h2>Improvised STOMP Chat App</h2>
+
+    <div id="messages"></div>
+
+    <div id="typing"></div>
+
+    <input id="msgInput" placeholder="Type message..." />
+    <button onclick="sendMessage()">Send</button>
+
+</div>
+
+<div id="sidebar">
+
+    <h3>Online Users</h3>
+    <ul id="users"></ul>
+
+    <h3>Events</h3>
+    <div id="events"></div>
+
+</div>
+
+<script>
+
+    const username = prompt("Enter username");
+
+    let typingTimeout;
+
+    const client = new StompJs.Client({
+        brokerURL: `ws://localhost:8080/chat?username=${username}`,
+        reconnectDelay: 5000
+    });
+
+    // -------------------------
+    // CONNECT & SUBSCRIBE
+    // -------------------------
+    client.onConnect = () => {
+
+        console.log("Connected");
+
+        // 1. Subscribe to all necessary topics first
+        
+        // Messages
+        client.subscribe("/topic/messages", msg => {
+            const data = JSON.parse(msg.body);
+            addMessage(`${data.username}: ${data.content}`);
+        });
+
+        // Events (join/leave)
+        client.subscribe("/topic/events", msg => {
+            const event = JSON.parse(msg.body);
+            addEvent(`${event.message}`);
+        });
+
+        // Online users list
+        client.subscribe("/topic/users", msg => {
+            const users = JSON.parse(msg.body);
+            updateUsers(users);
+        });
+		
+        // Typing indicators
+        client.subscribe("/topic/typing", msg => {
+            const data = JSON.parse(msg.body);
+            const typingDiv = document.getElementById("typing");
+
+            if (data && data.username) {
+                typingDiv.innerText = `${data.username} is typing...`;
+
+                // auto-clear after short delay
+                clearTimeout(window.__typingTimeout);
+
+                window.__typingTimeout = setTimeout(() => {
+                    typingDiv.innerText = "";
+                }, 1200);
+            }
+        });
+
+        // 2. Announce connection AFTER subscriptions are registered
+        client.publish({
+            destination: "/app/chat.join",
+            body: JSON.stringify({
+                username: username
+            })
+        });
+
+    };
+
+    client.activate();
+
+    // -------------------------
+    // SEND MESSAGE
+    // -------------------------
+    function sendMessage() {
+
+        const input = document.getElementById("msgInput");
+
+        if (input.value.trim() === "") return;
+
+        client.publish({
+            destination: "/app/message",
+            body: JSON.stringify({
+                username: username,
+                content: input.value
+            })
+        });
+
+        input.value = "";
+        stopTyping();
+    }
+
+    // -------------------------
+    // TYPING INDICATOR
+    // -------------------------
+    document.getElementById("msgInput").addEventListener("input", () => {
+
+        client.publish({
+            destination: "/app/typing",
+            body: JSON.stringify({
+                username: username
+            })
+        });
+
+        clearTimeout(typingTimeout);
+
+        typingTimeout = setTimeout(stopTyping, 1500);
+    });
+
+    function stopTyping() {
+        client.publish({
+            destination: "/app/typing/stop",
+            body: JSON.stringify({
+                username: username
+            })
+        });
+    }
+
+    // -------------------------
+    // UI HELPERS
+    // -------------------------
+    function addMessage(text) {
+        const div = document.getElementById("messages");
+        div.innerHTML += `<div>${text}</div>`;
+        div.scrollTop = div.scrollHeight;
+    }
+
+    function addEvent(text) {
+        const div = document.getElementById("events");
+        div.innerHTML += `<div>${text}</div>`;
+        div.scrollTop = div.scrollHeight;
+    }
+
+    function updateUsers(users) {
+        const ul = document.getElementById("users");
+        ul.innerHTML = "";
+
+        users.forEach(u => {
+            const li = document.createElement("li");
+            li.innerText = u;
+            ul.appendChild(li);
+        });
+    }
+
+</script>
+
+</body>
+</html>
