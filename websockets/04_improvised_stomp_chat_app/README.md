@@ -34,36 +34,37 @@ A real-time chat application built using Spring Boot, WebSocket, and STOMP, demo
 
 ## Architecture
 
+```text
 Browser
-│
-▼
+   │
+   ▼
 STOMP Client (STOMP.js)
-│
-▼
+   │
+   ▼
 WebSocket Connection (/chat)
-│
-▼
+   │
+   ▼
 Spring Message Broker
-│
-├── @MessageMapping Controllers
-│
-▼
+   │
+   ├── @MessageMapping Controllers
+   │
+   ▼
 ChatService (Business Logic Layer)
-│
-├── Online Users Store
-├── Event Processing
-│
-▼
+   │
+   ├── Online Users Store
+   └── Event Processing
+   │
+   ▼
 Broker Destinations
-│
-├── /topic/messages
-├── /topic/events
-├── /topic/users
-├── /topic/typing
-│
-▼
+   │
+   ├── /topic/messages
+   ├── /topic/events
+   ├── /topic/users
+   └── /topic/typing
+   │
+   ▼
 Subscribed Clients
-
+```
 ---
 
 ## Concepts Covered
