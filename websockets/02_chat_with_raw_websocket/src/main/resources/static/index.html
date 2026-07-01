@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<input id="message" type="text">
+<button onclick="send()">Send</button>
+
+<div id="chat"></div>
+
+<script>
+
+const socket = new WebSocket("ws://localhost:8080/chat");
+
+const username = prompt("Enter username");
+
+socket.onopen = () => {
+    console.log("Connected");
+    socket.send("JOIN:" + username);
+};
+
+socket.onmessage = (event) => {
+
+    const div = document.getElementById("chat");
+
+    div.innerHTML += "<p>" + event.data + "</p>";
+};
+
+function send() {
+
+    const input = document.getElementById("message");
+
+    socket.send(input.value);
+
+    input.value = "";
+}
+
+</script>
+
+</body>
+</html>
