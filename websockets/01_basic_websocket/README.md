@@ -42,7 +42,3 @@ Browser
 - Persistent connections
 - Full-duplex communication
 - Sending and receiving text frames
-
-## Next
-
-02-chat-with-raw-websocket
